@@ -19,47 +19,77 @@ if (!$apiKey) {
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <h1>PHP Weather App</h1>
+    <div class="container">
+        <h1>PHP Weather App</h1>
 
-    <form method="GET" action="">
-        <input type="text" name="city" placeholder="Enter city name" required>
-        <button type="submit">Get Weather</button>
-    </form>
+        <!-- Search Form -->
+        <form method="GET" action="">
+            <input type="text" name="city" placeholder="Enter city name" required>
+            <button type="submit">Get Weather</button>
+        </form>
 
-    <?php
-    if (isset($_GET['city'])) {
-        $city = htmlspecialchars($_GET['city']);
-        $url = "https://api.openweathermap.org/data/2.5/weather?q={$city}&appid={$apiKey}&units=metric&lang=tr";
+        <?php
+        if (isset($_GET['city'])) {
+            $city = htmlspecialchars($_GET['city']);
+            $url = "https://api.openweathermap.org/data/2.5/weather?q={$city}&appid={$apiKey}&units=metric&lang=en";
 
-        // Initialize cURL
-        $ch = curl_init();
-        curl_setopt($ch, CURLOPT_URL, $url);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false); // in case of SSL error
-        $response = curl_exec($ch);
+            // Initialize cURL
+            $ch = curl_init();
+            curl_setopt($ch, CURLOPT_URL, $url);
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false); // in case of SSL error
+            $response = curl_exec($ch);
 
-        // Check for cURL errors
-        if (curl_errno($ch)) {
-            echo "<p>cURL error: " . curl_error($ch) . "</p>";
-        } else {
-            $data = json_decode($response, true);
-
-            if (isset($data['cod']) && $data['cod'] != 200) {
-                echo "<p>Error: " . $data['message'] . "</p>";
+            // Check for cURL errors
+            if (curl_errno($ch)) {
+                echo "<div class='weather-info' style='color: red;'>cURL Error: " . curl_error($ch) . "</div>";
             } else {
-                echo "<h2>Weather in " . $data['name'] . "</h2>";
-                echo "<p>Temperature: " . $data['main']['temp'] . " °C</p>";
-                echo "<p>Condition: " . $data['weather'][0]['description'] . "</p>";
-                echo "<p>Humidity: " . $data['main']['humidity'] . "%</p>";
+                $data = json_decode($response, true);
 
-                $iconCode = $data['weather'][0]['icon'];
-                $iconUrl = "https://openweathermap.org/img/wn/{$iconCode}@2x.png";
-                echo "<img src='$iconUrl' alt='Weather icon'>";
+                if (isset($data['cod']) && $data['cod'] != 200) {
+                    echo "<div class='weather-info' style='color: red; font-weight: bold;'>Error: " . ucfirst($data['message']) . "</div>";
+                } else {
+                    $description = ucfirst($data['weather'][0]['description']);
+                    echo "<div class='weather-info'>";
+                    echo "<h2>Weather in " . $data['name'] . "</h2>";
+                    echo "<p>Temperature: " . $data['main']['temp'] . " °C</p>";
+                    echo "<p>Condition: " . $description . "</p>";
+                    echo "<p>Humidity: " . $data['main']['humidity'] . "%</p>";
+
+                    $iconCode = $data['weather'][0]['icon'];
+                    $iconUrl = "https://openweathermap.org/img/wn/{$iconCode}@2x.png";
+                    echo "<img src='$iconUrl' alt='Weather icon'>";
+                    echo "</div>";
+                }
             }
-        }
 
-        curl_close($ch);
-    }
-    ?>
+            curl_close($ch);
+        }
+        ?>
+    </div>
+
+    <!-- Loading Indicator Script -->
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const form = document.querySelector("form");
+            const container = document.querySelector(".container");
+
+            form.addEventListener("submit", function () {
+                const loadingDiv = document.createElement("p");
+                loadingDiv.textContent = "Loading weather data...";
+                loadingDiv.id = "loading-message";
+                loadingDiv.style.marginTop = "15px";
+                loadingDiv.style.color = "#555";
+                container.appendChild(loadingDiv);
+            });
+        });
+
+        window.addEventListener("load", () => {
+            const loading = document.getElementById("loading-message");
+            if (loading) {
+                loading.remove();
+            }
+        });
+    </script>
 </body>
 </html>
